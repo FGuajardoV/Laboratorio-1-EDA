@@ -19,6 +19,7 @@ int main ()
   int i, j, matrixSize;
   int** matrix;
   char fileName[ 256 ];
+  long int determinante;
 
   printf("Ingrese nombre del archivo contenedor de la matriz: "); scanf("%s", fileName);
 
@@ -31,10 +32,19 @@ int main ()
   }
 
   matrixSize = obtainMatrixSize ( matrixFile );
-
   matrix = malloc ( matrixSize * sizeof ( int * ) );
+
   for ( i = 0; i < matrixSize; i++ )
-    matrix[i] = malloc ( 4 * sizeof ( int ) );
+    matrix[i] = malloc ( matrixSize * sizeof ( int ) );
+
+  for ( i = 0; i < matrixSize; i++ )
+  {
+    for ( j = 0; j < matrixSize; j++ )
+    {
+      if ( !fscanf ( matrixFile, "%d", &matrix[i][j] ) ) 
+        break;
+    }
+  }
 
   fclose ( matrixFile );
 }
