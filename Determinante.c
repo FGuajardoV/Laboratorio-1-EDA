@@ -1,13 +1,83 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-int obtainMatrixSize(FILE *matrixFile)   
+void freeMemory(long int **array, int arraySize)
+{
+  for ( int i = 0; i < arraySize; i++)
+    free ( array[i] );
+
+  free ( array );
+}
+
+
+void getCofactorMatrix(long int **matrix, long int **temporal, int p, int q, int matrixSize)
+{
+  int i = 0, j = 0;
+
+  for (int row = 0; row < matrixSize; row++) 
+  { 
+    for (int col = 0; col < matrixSize; col++) 
+    { 
+      if (row != p && col != q) 
+      { 
+        temporal[i][j++] = matrix[row][col]; 
+
+        if (j == matrixSize - 1) 
+        { 
+          j = 0; 
+          i++; 
+        }
+      } 
+    }
+  } 
+}
+
+long int detMatrix ( long int **matrix, int matrixSize )
+{
+  long int determinant = 0, i;
+  long int **temporal;
+  int sign = 1;
+
+  temporal = malloc ( matrixSize * sizeof ( long int * ) );
+  for ( i = 0; i < matrixSize; i++ )
+    temporal[i] = malloc ( matrixSize * sizeof ( long int ) );
+
+  if ( matrixSize == 1 ) 
+    return matrix[0][0];
+
+  else if ( matrixSize == 2 )
+    return matrix[0][0] * matrix[1][1] - matrix[1][0] * matrix[0][1];
+
+  for ( i = 0; i < matrixSize; i++)
+  {
+    getCofactorMatrix(matrix, temporal, 0, i, matrixSize);
+    determinant = determinant + sign * matrix[0][i] * detMatrix (temporal, matrixSize - 1);
+    sign = -sign; 
+  }
+
+  freeMemory( temporal, matrixSize );
+  return determinant;
+}
+
+void displayMatrix ( long int **matrix, int matrixSize ) 
+{ 
+  printf ( "\n" );
+  int i,j;
+  for ( i = 0; i < matrixSize; i++ ) 
+  { 
+    for ( j = 0; j < matrixSize; j++ ) 
+      printf ( "  %ld", matrix[i][j] ); 
+    printf ( "\n" ); 
+  } 
+}
+
+int obtainMatrixSize ( FILE *matrixFile )   
 {
   int matrixSize;
   char size [ 256 ];
 
-  fscanf ( matrixFile, "%s", size ); // save matrix size from the file
-  matrixSize = atoi ( size );
+  fscanf ( matrixFile, "%s", size );
+  matrixSize = atoi ( size ); // se guarda el tamanio de la matriz en una variable
 
   return matrixSize;
 }
@@ -18,11 +88,12 @@ int main ()
   int i, j, matrixSize;
   char fileName[ 256 ];
   long int determinant;
+  long int** matrix;
 
-  printf("\n\n************************ Inicio Programa ************************\n\n");
-  printf("Ingrese nombre del archivo contenedor de la matriz: "); scanf("%s", fileName);
+  printf ( "\n\n************************ Inicio Programa ************************\n\n" );
+  printf ( "Ingrese nombre del archivo contenedor de la matriz: "); scanf("%s", fileName );
 
-  matrixFile = fopen ( fileName, "r" ); // read mode
+  matrixFile = fopen ( fileName, "r" ); // se abre el archivo en modo lectura
 
   if ( matrixFile == NULL)
   {
@@ -31,32 +102,27 @@ int main ()
   }
 
   matrixSize = obtainMatrixSize ( matrixFile );
-
-  //idea de codigo rescatada desde StackOverflow: ------------------------------------------------------------
-  // https://stackoverflow.com/questions/18215325/how-to-read-from-text-file-and-store-in-matrix-in-c --------
-
-  int** matrix;
-  matrix = malloc ( matrixSize * sizeof ( int * ) );
+  matrix = malloc ( matrixSize * sizeof ( long int * ) );
 
   for ( i = 0; i < matrixSize; i++ )
-    matrix[i] = malloc ( matrixSize * sizeof ( int ) );
+    matrix[i] = malloc ( matrixSize * sizeof ( long int ) );
 
   for ( i = 0; i < matrixSize; i++ )
   {
     for ( j = 0; j < matrixSize; j++ )
     {
-      if ( !fscanf ( matrixFile, "%d", &matrix[i][j] ) ) 
+      if ( !fscanf ( matrixFile, "%ld", &matrix[i][j] ) ) 
         break;
     }
   }
-  // fin de codigo rescatado ----------------------------------------------------------------------------------
 
-  if ( matrixSize == 1 ) determinant = matrix[0][0]; 
+  //displayMatrix ( matrix,matrixSize );
 
-  if ( matrixSize == 2 ) determinant = matrix[0][0] * matrix[1][1] - matrix[1][0] * matrix[0][1];
+  determinant = detMatrix ( matrix, matrixSize );
 
-  printf ( "\nEl determinante de la matriz del archivo '%s' es: %ld\n",fileName, determinant );
-
+  printf ( "\nEl determinante de la matriz es: %ld\n", determinant );
+  freeMemory ( matrix, matrixSize );
   fclose ( matrixFile );
-  printf("\n\n************************** Fin Programa *************************\n\n");
+
+  printf ( "\n\n************************** Fin Programa *************************\n\n" );
 }
