@@ -1,10 +1,11 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 //Funcion que libera los arreglos creados por malloc.
-void freeMemory(long int **array, int arraySize)
+void freeMemory ( long int **array, int arraySize )
 {
-  for ( int i = 0; i < arraySize; i++)
+  for ( int i = 0; i < arraySize; i++ )
     free ( array[i] );
 
   free ( array );
@@ -12,6 +13,8 @@ void freeMemory(long int **array, int arraySize)
 
 //Funcion para obtener la matriz de cofactores de matrix, almacenandose en una
 //matriz temporal, siendo matrixSize el tamano actual del arreglo.
+//p (fila), q (columna) son los indices de donde se quieren obtener los cofactores.
+//Pero como siempre se ingresara la busqueda de la primera fila, por lo general p ingresara como 0.
 void getCofactorMatrix ( long int **matrix, long int **temporal, int p, int q, int matrixSize )
 {
   int i, j;
@@ -21,19 +24,20 @@ void getCofactorMatrix ( long int **matrix, long int **temporal, int p, int q, i
 
   //Recorremos todos los elementos de la matriz.
   //row = fila, col = columna.
-  for (int row = 0; row < matrixSize; row++) 
+  for ( int row = 0; row < matrixSize; row++ ) 
   { 
-    for (int col = 0; col < matrixSize; col++) 
+    for ( int col = 0; col < matrixSize; col++ ) 
     { 
       //Se copian los elementos de la matriz en la temporal. Que no corresponden a las actuales 
-      //filas y columnas.
-      if (row != p && col != q) 
+      //filas y columnas (p y q).
+      if ( row != p && col != q ) 
       { 
-        temporal[i][j++] = matrix[row][col]; 
+        temporal[ i ][ j ] = matrix[ row ][ col ];
+        j++; 
 
-        //Se llena la fila, asi que se incrementa el index de la fila y se retea
+        //Se llena la fila, asi que se incrementa el index de la fila y se resetea
         //el index de la columna.
-        if (j == matrixSize - 1) 
+        if ( j == matrixSize - 1 ) 
         { 
           j = 0; 
           i++; 
@@ -49,7 +53,7 @@ void getCofactorMatrix ( long int **matrix, long int **temporal, int p, int q, i
 //añadimos todos los elementos con signos alternantes. 
 //Como caso base, el valor determinante de una matriz 1 * 1 es el único valor en sí mismo.
 //El cofactor de un elemento, es una matriz que podemos obtener al eliminar la fila y la columna de ese
-//elemento de esa matriz.
+//elemento de la matriz.
 long int detMatrix ( long int **matrix, int matrixSize )
 {
   long int determinant;
@@ -65,22 +69,22 @@ long int detMatrix ( long int **matrix, int matrixSize )
   //Esta matriz se crea para almacenar los cofactores.
   temporal = malloc ( matrixSize * sizeof ( long int * ) );
   for ( i = 0; i < matrixSize; i++ )
-    temporal[i] = malloc ( matrixSize * sizeof ( long int ) );
+    temporal[ i ] = malloc ( matrixSize * sizeof ( long int ) );
 
   //Caso base matriz 1 * 1.
   if ( matrixSize == 1 ) 
-    return matrix[0][0];
+    return matrix[ 0 ][ 0 ];
 
-  //Caso base matriz 2 * 2.
+  //Caso base matriz 2 * 2. Para simplificar el desarrollo del algoritmo
   else if ( matrixSize == 2 )
-    return matrix[0][0] * matrix[1][1] - matrix[1][0] * matrix[0][1];
+    return matrix[ 0 ][ 0 ] * matrix[ 1 ][ 1 ] - matrix[ 1 ][ 0 ] * matrix[ 0 ][ 1 ];
 
   //Se itera para cada elemento de la primera fila.
   for ( i = 0; i < matrixSize; i++)
   {
     //Se obtiene la matriz de cofactores de matriz[0][i].
-    getCofactorMatrix(matrix, temporal, 0, i, matrixSize);
-    determinant = determinant + sign * matrix[0][i] * detMatrix (temporal, matrixSize - 1);
+    getCofactorMatrix ( matrix, temporal, 0, i, matrixSize );
+    determinant = determinant + sign * matrix[ 0 ][ i ] * detMatrix ( temporal, matrixSize - 1 );
 
     //Los terminos se agregaran con signos alternados.
     sign = -sign; 
@@ -129,9 +133,11 @@ int main ()
   long int** matrix;
 
   printf ( "\n\n************************ Inicio Programa ************************\n\n" );
-  printf ( "Ingrese nombre del archivo contenedor de la matriz: "); scanf("%s", fileName );
+  printf ( "Ingrese nombre del archivo contenedor de la matriz: "); 
+  scanf("%s", fileName );
 
-  matrixFile = fopen ( fileName, "r" ); // se abre el archivo en modo lectura
+  // se abre el archivo en modo lectura
+  matrixFile = fopen ( fileName, "r" ); 
 
   //Se verifica si es que el archivo existe dentro del directorio, si es que este no se
   //encuentra mostrara un mensaje de error en pantalla para guiar al usuario.
@@ -141,26 +147,33 @@ int main ()
     exit ( EXIT_FAILURE );
   }
 
+  //Se crea con memoria dinamica el arreglo para almacenar la matriz
   matrixSize = obtainMatrixSize ( matrixFile );
   matrix = malloc ( matrixSize * sizeof ( long int * ) );
 
+  //Se crean los 'subarreglos' de la matriz
   for ( i = 0; i < matrixSize; i++ )
-    matrix[i] = malloc ( matrixSize * sizeof ( long int ) );
+    matrix[ i ] = malloc ( matrixSize * sizeof ( long int ) );
 
+  //Se lee el archivo para rescatar los numeros de este
   for ( i = 0; i < matrixSize; i++ )
   {
     for ( j = 0; j < matrixSize; j++ )
     {
-      if ( !fscanf ( matrixFile, "%ld", &matrix[i][j] ) ) 
+      //Se almacenan en long integer, si no encuentra un int sale del for por el break.
+      //Pero el puntero del archivo se sigue moviendo.
+      if ( !fscanf ( matrixFile, "%ld", &matrix[ i ][ j ] ) ) 
         break;
     }
   }
-
   //displayMatrix ( matrix,matrixSize );
 
+  //llamada de la funcion que nos entregara el determinante
   determinant = detMatrix ( matrix, matrixSize );
 
   printf ( "\nEl determinante de la matriz es: %ld\n", determinant );
+
+  //Liberamiento de memoria, tanto del arreglo como del archivo.
   freeMemory ( matrix, matrixSize );
   fclose ( matrixFile );
 
