@@ -110,7 +110,7 @@ void displayMatrix ( long int **matrix, int matrixSize )
 }
 
 //Retorna el tamano de la matriz rescatado desde el archivo.
-int obtainMatrixSize ( FILE *matrixFile )   
+int getMatrixSize ( FILE *matrixFile )   
 {
   int matrixSize;
   char size [ 256 ];
@@ -144,11 +144,12 @@ int main ()
   if ( matrixFile == NULL)
   {
     perror ( "Error al intentar de abrir el archivo... " );
+    printf ( "\n\n************************** Fin Programa *************************\n\n" );
     exit ( EXIT_FAILURE );
   }
 
   //Se crea con memoria dinamica el arreglo para almacenar la matriz
-  matrixSize = obtainMatrixSize ( matrixFile );
+  matrixSize = getMatrixSize ( matrixFile );
   matrix = malloc ( matrixSize * sizeof ( long int * ) );
 
   //Se crean los 'subarreglos' de la matriz
